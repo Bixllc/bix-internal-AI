@@ -1,13 +1,29 @@
+'use client'
+
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { ColdEmail } from '../../types'
+import { regenerateOutreachAction } from '../../actions/regenerateOutreach'
 import { Button, Card, SectionHeading, Spinner } from '../ui'
 
-export function ColdEmailCard({ email }: { email: ColdEmail }) {
+export function ColdEmailCard({ prospectId, email }: { prospectId: string; email: ColdEmail }) {
+  const router = useRouter()
   const [isGenerating, setIsGenerating] = useState(false)
+  const [current, setCurrent] = useState(email)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleRegenerate() {
+  async function handleRegenerate() {
     setIsGenerating(true)
-    setTimeout(() => setIsGenerating(false), 1800)
+    setError(null)
+    const result = await regenerateOutreachAction(prospectId)
+    setIsGenerating(false)
+
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setCurrent(result.data)
+    router.refresh()
   }
 
   return (
@@ -22,6 +38,7 @@ export function ColdEmailCard({ email }: { email: ColdEmail }) {
           </Button>
         }
       />
+      {error && <p className="mt-3 text-xs text-danger">{error}</p>}
       <div className="mt-5 rounded-xl border border-border bg-canvas p-4">
         {isGenerating ? (
           <div className="flex flex-col gap-2">
@@ -32,10 +49,8 @@ export function ColdEmailCard({ email }: { email: ColdEmail }) {
           </div>
         ) : (
           <>
-            <p className="text-sm font-medium text-ink">Subject: {email.subject}</p>
-            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted">
-              {email.body}
-            </p>
+            <p className="text-sm font-medium text-ink">Subject: {current.subject}</p>
+            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted">{current.body}</p>
           </>
         )}
       </div>

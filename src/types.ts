@@ -1,39 +1,7 @@
-export type ProspectStatus =
-  | 'new'
-  | 'analyzed'
-  | 'contacted'
-  | 'replied'
-  | 'audit_booked'
-  | 'proposal_sent'
-  | 'won'
-  | 'lost'
+import type { Prospect as PrismaProspect, ProspectStatus, ProspectActivity, AIAnalysisJob } from '@prisma/client'
 
-export type BixService =
-  | 'Website Redesign'
-  | 'BIX Booking'
-  | 'BIX Client Portal'
-  | 'Workflow Automation'
-  | 'AI Automation'
-  | 'Custom Software'
-
-export type OpportunityTier = 'Excellent' | 'Good' | 'Moderate'
-
-export interface Prospect {
-  id: string
-  businessName: string
-  industry: string
-  location: string
-  website: string
-  phone: string
-  address: string
-  source: string
-  status: ProspectStatus
-  opportunityScore: number
-  createdAt: string
-  updatedAt: string
-  surfaceReason?: string
-  primaryAction?: string
-}
+export type { ProspectStatus, ProspectActivity, AIAnalysisJob }
+export type Prospect = PrismaProspect
 
 export interface CustomerJourneyStep {
   step: string
@@ -49,36 +17,17 @@ export interface DetectedSoftware {
 export interface AutomationOpportunity {
   title: string
   description: string
-  impactTag: string
+  businessImpact?: string
+  estimatedHoursSavedPerMonth?: string
+  recommendedBixService?: string
 }
 
 export interface RecommendedSolution {
-  service: BixService
-  why: string
-  impact: string
+  service: string
+  whyItFits: string
+  expectedImpact: string
   implementation: string
-  price: string
-}
-
-export interface OpportunitySummary {
-  rating: number
-  score: number
-  tier: OpportunityTier
-  hoursSavedPerMonth: number
-  projectValueEstimate: string
-  recommendedService: BixService
-}
-
-export interface ColdEmail {
-  subject: string
-  body: string
-}
-
-export interface ActivityEvent {
-  id: string
-  label: string
-  timestamp: string
-  type: 'system' | 'user' | 'ai'
+  estimatedPriceRange: string
 }
 
 export interface InternalNote {
@@ -88,22 +37,30 @@ export interface InternalNote {
   note: string
 }
 
-export interface ProspectDetail extends Prospect {
-  estimatedValueRange: string
-  opportunity: OpportunitySummary
-  executiveSummary: string[]
-  businessOverview: string
+export interface ColdEmail {
+  subject: string
+  body: string
+}
+
+/** Shape returned by the AI analysis call, before it's persisted onto a Prospect row. */
+export interface AIAnalysisReport {
+  executiveSummary: string
+  services: string[]
+  targetCustomers: string[]
   customerJourney: CustomerJourneyStep[]
   detectedSoftware: DetectedSoftware
-  likelyManualProcesses: string[]
+  manualProcesses: string[]
   painPoints: string[]
   automationOpportunities: AutomationOpportunity[]
   businessImpact: string[]
-  recommendedSolutions: RecommendedSolution[]
-  estimatedProjectValue: { oneTime: string; recurring: string }
-  coldEmail: ColdEmail
+  opportunityScore: number
+  leadQuality: 'Excellent' | 'Good' | 'Moderate' | 'Low'
+  estimatedHoursSaved: string
+  estimatedProjectValue: string
+  estimatedMonthlyRevenue: string
+  recommendedBixSolution: string
+  recommendedBixSolutions: RecommendedSolution[]
+  coldEmailDraft: string
   linkedinMessage: string
   salesTalkingPoints: string[]
-  internalNotes: InternalNote[]
-  activityTimeline: ActivityEvent[]
 }

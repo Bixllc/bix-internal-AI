@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProspectStatus {
+  new
+  analyzed
+  email_drafted
+  contacted
+  replied
+  audit_booked
+  proposal_sent
+  won
+  lost
+}
+
+model Prospect {
+  id       String @id @default(cuid())
+
+  // Core identity (from lead search)
+  businessName   String
+  industry       String
+  location       String
+  website        String?
+  phone          String?
+  address        String?
+  googlePlaceId  String? @unique
+  googleMapsUrl  String?
+  source         String  @default("manual")
+  status         ProspectStatus @default(new)
+
+  // AI opportunity report
+  opportunityScore          Int?
+  leadQuality               String?
+  estimatedHoursSaved       String?
+  estimatedProjectValue     String?
+  estimatedMonthlyRevenue   String?
+  recommendedBixSolution    String?
+  executiveSummary          String? @db.Text
+  services                  Json?
+  targetCustomers           Json?
+  customerJourney           Json?
+  detectedSoftware          Json?
+  manualProcesses           Json?
+  painPoints                Json?
+  automationOpportunities   Json?
+  businessImpact            Json?
+  recommendedBixSolutions   Json?
+  coldEmailDraft            String? @db.Text
+  linkedinMessage           String? @db.Text
+  salesTalkingPoints        Json?
+
+  notes Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activities ProspectActivity[]
+  analysisJobs AIAnalysisJob[]
+
+  @@index([status])
+  @@index([opportunityScore])
+  @@index([website])
+}
+
+model ProspectActivity {
+  id         String   @id @default(cuid())
+  prospectId String
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  type       String
+  message    String
+  createdAt  DateTime @default(now())
+
+  @@index([prospectId])
+}
+
+model AIAnalysisJob {
+  id          String    @id @default(cuid())
+  prospectId  String
+  prospect    Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  status      String    @default("queued")
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([prospectId])
+  @@index([status])
+}

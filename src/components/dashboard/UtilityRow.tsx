@@ -1,5 +1,5 @@
 import { Card } from '../ui'
-import { aiUsageToday, scoreDistribution, systemStatus } from '../../data'
+import type { SystemStatusItem } from '../../lib/systemStatus'
 
 const statusDotClasses = {
   healthy: 'bg-success',
@@ -7,7 +7,13 @@ const statusDotClasses = {
   down: 'bg-danger',
 }
 
-export function UtilityRow() {
+interface UtilityRowProps {
+  scoreDistribution: { label: string; count: number }[]
+  systemStatus: SystemStatusItem[]
+  aiUsage: { analysesToday: number; emailsDraftedToday: number; failedToday: number }
+}
+
+export function UtilityRow({ scoreDistribution, systemStatus, aiUsage }: UtilityRowProps) {
   const maxCount = Math.max(...scoreDistribution.map((b) => b.count), 1)
 
   return (
@@ -49,17 +55,15 @@ export function UtilityRow() {
         <div className="mt-4 flex flex-col gap-3 text-sm">
           <div className="flex justify-between">
             <span className="text-muted">Analyses run</span>
-            <span className="font-mono tabular-nums text-ink">{aiUsageToday.analysesRun}</span>
+            <span className="font-mono tabular-nums text-ink">{aiUsage.analysesToday}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted">Emails drafted</span>
-            <span className="font-mono tabular-nums text-ink">{aiUsageToday.emailsDrafted}</span>
+            <span className="font-mono tabular-nums text-ink">{aiUsage.emailsDraftedToday}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted">Credits used</span>
-            <span className="font-mono tabular-nums text-ink">
-              {aiUsageToday.creditsUsed} / {aiUsageToday.creditsTotal}
-            </span>
+            <span className="text-muted">Failed analyses</span>
+            <span className="font-mono tabular-nums text-ink">{aiUsage.failedToday}</span>
           </div>
         </div>
       </Card>

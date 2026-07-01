@@ -10,9 +10,14 @@ export function AutomationOpportunities({ items }: { items: AutomationOpportunit
           <div key={item.title} className="rounded-xl border border-border p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-medium text-ink">{item.title}</p>
-              <Badge className="shrink-0 bg-accent-soft text-accent">{item.impactTag}</Badge>
+              {item.businessImpact && (
+                <Badge className="shrink-0 bg-accent-soft text-accent">{item.businessImpact}</Badge>
+              )}
             </div>
             <p className="mt-2 text-sm text-muted">{item.description}</p>
+            {item.estimatedHoursSavedPerMonth && (
+              <p className="mt-2 text-xs text-faint">Est. {item.estimatedHoursSavedPerMonth} saved</p>
+            )}
           </div>
         ))}
       </div>

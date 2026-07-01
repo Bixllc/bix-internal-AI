@@ -1,16 +1,22 @@
-import { NavLink } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Sparkle } from '../ui'
-import { aiUsageToday } from '../../data'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/find-leads', label: 'Find Leads' },
-  { to: '/pipeline', label: 'Pipeline' },
+  { href: '/', label: 'Dashboard' },
+  { href: '/find-leads', label: 'Find Leads' },
+  { href: '/pipeline', label: 'Pipeline' },
 ]
 
-export function Sidebar() {
-  const creditsRemaining = aiUsageToday.creditsTotal - aiUsageToday.creditsUsed
-  const creditsPct = Math.round((aiUsageToday.creditsUsed / aiUsageToday.creditsTotal) * 100)
+interface SidebarProps {
+  analysesToday: number
+}
+
+export function Sidebar({ analysesToday }: SidebarProps) {
+  const pathname = usePathname()
+  const usagePct = Math.min(100, Math.round((analysesToday / 20) * 100))
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-card px-4 py-5">
@@ -25,37 +31,30 @@ export function Sidebar() {
       </div>
 
       <nav className="mt-8 flex flex-col gap-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-accent-soft text-accent'
-                  : 'text-muted hover:bg-ink/[0.04] hover:text-ink'
-              }`
-            }
-          >
-            {item.label}
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isActive ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-ink/[0.04] hover:text-ink'
+              }`}
+            >
+              {item.label}
+            </Link>
+          )
+        })}
       </nav>
 
       <div className="mt-auto flex flex-col gap-3">
         <div className="rounded-xl border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">AI credits</p>
-            <p className="font-mono text-xs tabular-nums text-faint">
-              {creditsRemaining} / {aiUsageToday.creditsTotal}
-            </p>
+            <p className="text-xs font-medium text-muted">AI usage today</p>
+            <p className="font-mono text-xs tabular-nums text-faint">{analysesToday} analyses</p>
           </div>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink/5">
-            <div
-              className="h-full rounded-full bg-accent"
-              style={{ width: `${creditsPct}%` }}
-            />
+            <div className="h-full rounded-full bg-accent" style={{ width: `${usagePct}%` }} />
           </div>
         </div>
 

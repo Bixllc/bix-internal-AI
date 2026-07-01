@@ -1,5 +1,7 @@
+'use client'
+
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { Sparkle } from '../ui'
 
 interface CommandItem {
@@ -15,7 +17,7 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
-  const navigate = useNavigate()
+  const router = useRouter()
 
   useEffect(() => {
     if (!open) return
@@ -38,26 +40,26 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       id: 'ask-find-medspas',
       label: 'Find 50 med spas in Miami',
       hint: 'Find Leads',
-      onRun: () => navigate('/find-leads?industry=Med+Spa&location=Miami%2C+FL&maxResults=50'),
+      onRun: () => router.push('/find-leads?industry=Med+Spa&location=Miami%2C+FL&maxResults=50'),
     },
     {
-      id: 'ask-analyze-riverside',
-      label: 'Analyze Riverside Dental',
-      hint: 'Prospect',
-      onRun: () => navigate('/prospect/riverside-dental'),
+      id: 'ask-analyze-prospect',
+      label: 'Analyze a saved prospect',
+      hint: 'Pipeline',
+      onRun: () => router.push('/pipeline'),
     },
     {
       id: 'ask-generate-outreach',
       label: 'Generate outreach for high-scoring prospects',
       hint: "Today's Queue",
-      onRun: () => navigate('/'),
+      onRun: () => router.push('/'),
     },
   ]
 
   const navigateCommands: CommandItem[] = [
-    { id: 'nav-dashboard', label: 'Dashboard', onRun: () => navigate('/') },
-    { id: 'nav-find-leads', label: 'Find Leads', onRun: () => navigate('/find-leads') },
-    { id: 'nav-pipeline', label: 'Pipeline', onRun: () => navigate('/pipeline') },
+    { id: 'nav-dashboard', label: 'Dashboard', onRun: () => router.push('/') },
+    { id: 'nav-find-leads', label: 'Find Leads', onRun: () => router.push('/find-leads') },
+    { id: 'nav-pipeline', label: 'Pipeline', onRun: () => router.push('/pipeline') },
   ]
 
   return (
@@ -76,9 +78,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             placeholder="Ask AI or run a command…"
             className="w-full bg-transparent text-sm text-ink placeholder:text-faint focus:outline-none"
           />
-          <kbd className="rounded-md border border-border px-1.5 py-0.5 font-mono text-xs text-faint">
-            Esc
-          </kbd>
+          <kbd className="rounded-md border border-border px-1.5 py-0.5 font-mono text-xs text-faint">Esc</kbd>
         </div>
 
         <div className="max-h-96 overflow-y-auto p-2">
@@ -101,9 +101,7 @@ function CommandGroup({
 }) {
   return (
     <div className="mb-2 last:mb-0">
-      <p className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-faint">
-        {title}
-      </p>
+      <p className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-faint">{title}</p>
       <div className="flex flex-col gap-0.5">
         {items.map((item) => (
           <button

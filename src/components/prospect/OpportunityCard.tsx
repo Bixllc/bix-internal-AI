@@ -1,15 +1,9 @@
-import type { ProspectDetail } from '../../types'
-import { toneClasses } from '../../lib/status'
+import type { Prospect } from '../../types'
+import { leadQualityTone, ratingForScore, toneClasses } from '../../lib/status'
 import { Badge, Card, SectionHeading, StarRating } from '../ui'
 
-const tierTone = {
-  Excellent: toneClasses.success,
-  Good: toneClasses.info,
-  Moderate: toneClasses.warning,
-} as const
-
-export function OpportunityCard({ detail }: { detail: ProspectDetail }) {
-  const { opportunity } = detail
+export function OpportunityCard({ prospect }: { prospect: Prospect }) {
+  const score = prospect.opportunityScore ?? 0
 
   return (
     <Card className="p-6">
@@ -18,37 +12,36 @@ export function OpportunityCard({ detail }: { detail: ProspectDetail }) {
         <div>
           <p className="text-xs font-medium text-faint">Rating</p>
           <div className="mt-2">
-            <StarRating rating={opportunity.rating} />
+            <StarRating rating={ratingForScore(score)} />
           </div>
         </div>
         <div>
           <p className="text-xs font-medium text-faint">Score</p>
-          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-ink">
-            {opportunity.score}
-          </p>
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-ink">{score}</p>
         </div>
         <div>
-          <p className="text-xs font-medium text-faint">Tier</p>
+          <p className="text-xs font-medium text-faint">Lead Quality</p>
           <div className="mt-2">
-            <Badge className={tierTone[opportunity.tier]}>{opportunity.tier}</Badge>
+            {prospect.leadQuality && (
+              <Badge className={toneClasses[leadQualityTone[prospect.leadQuality] ?? 'muted']}>
+                {prospect.leadQuality}
+              </Badge>
+            )}
           </div>
         </div>
         <div>
           <p className="text-xs font-medium text-faint">Est. Hours Saved</p>
-          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-ink">
-            {opportunity.hoursSavedPerMonth}
-            <span className="ml-1 text-sm font-normal text-muted">/mo</span>
-          </p>
+          <p className="mt-2 text-lg font-semibold text-ink">{prospect.estimatedHoursSaved ?? '—'}</p>
         </div>
       </div>
       <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-5 lg:grid-cols-2">
         <div>
           <p className="text-xs font-medium text-faint">Est. Project Value</p>
-          <p className="mt-1 text-sm font-medium text-ink">{opportunity.projectValueEstimate}</p>
+          <p className="mt-1 text-sm font-medium text-ink">{prospect.estimatedProjectValue ?? '—'}</p>
         </div>
         <div>
           <p className="text-xs font-medium text-faint">Recommended BIX Solution</p>
-          <p className="mt-1 text-sm font-medium text-accent">{opportunity.recommendedService}</p>
+          <p className="mt-1 text-sm font-medium text-accent">{prospect.recommendedBixSolution ?? '—'}</p>
         </div>
       </div>
     </Card>

@@ -3,6 +3,7 @@ import type { ProspectStatus } from '../types'
 export const statusLabels: Record<ProspectStatus, string> = {
   new: 'New',
   analyzed: 'Analyzed',
+  email_drafted: 'Email Drafted',
   contacted: 'Contacted',
   replied: 'Replied',
   audit_booked: 'Audit Booked',
@@ -16,6 +17,7 @@ type Tone = 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'muted'
 export const statusTone: Record<ProspectStatus, Tone> = {
   new: 'muted',
   analyzed: 'info',
+  email_drafted: 'info',
   contacted: 'warning',
   replied: 'accent',
   audit_booked: 'success',
@@ -46,4 +48,19 @@ export function scoreTone(score: number): Tone {
 
 export function scoreBadgeClasses(score: number): string {
   return toneClasses[scoreTone(score)]
+}
+
+export function ratingForScore(score: number): number {
+  if (score >= 85) return 5
+  if (score >= 70) return 4
+  if (score >= 55) return 3
+  if (score >= 40) return 2
+  return 1
+}
+
+export const leadQualityTone: Record<string, Tone> = {
+  Excellent: 'success',
+  Good: 'info',
+  Moderate: 'warning',
+  Low: 'danger',
 }

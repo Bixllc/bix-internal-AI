@@ -1,23 +1,29 @@
+'use client'
+
 import { useState } from 'react'
 import type { InternalNote } from '../../types'
 import { formatDateTime } from '../../lib/format'
-import { Button, Card, SectionHeading } from '../ui'
+import { addProspectNoteAction } from '../../actions/prospects'
+import { Button, Card, SectionHeading, Spinner } from '../ui'
 
-export function InternalNotesCard({ notes: initialNotes }: { notes: InternalNote[] }) {
+export function InternalNotesCard({ prospectId, notes: initialNotes }: { prospectId: string; notes: InternalNote[] }) {
   const [notes, setNotes] = useState(initialNotes)
   const [draft, setDraft] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!draft.trim()) return
-    setNotes((prev) => [
-      ...prev,
-      {
-        id: `note-${prev.length + 1}-${Date.now()}`,
-        author: 'You',
-        timestamp: new Date().toISOString(),
-        note: draft.trim(),
-      },
-    ])
+    setIsSaving(true)
+    setError(null)
+    const result = await addProspectNoteAction(prospectId, draft.trim())
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    setNotes(result.data)
     setDraft('')
   }
 
@@ -36,6 +42,7 @@ export function InternalNotesCard({ notes: initialNotes }: { notes: InternalNote
         ))}
         {notes.length === 0 && <p className="text-sm text-faint">No notes yet.</p>}
       </div>
+      {error && <p className="mt-3 text-xs text-danger">{error}</p>}
       <div className="mt-4 flex gap-2">
         <input
           value={draft}
@@ -44,7 +51,8 @@ export function InternalNotesCard({ notes: initialNotes }: { notes: InternalNote
           placeholder="Add a note…"
           className="flex-1 rounded-xl border border-border bg-canvas px-3 py-2 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none"
         />
-        <Button variant="secondary" onClick={handleAdd}>
+        <Button variant="secondary" onClick={handleAdd} disabled={isSaving}>
+          {isSaving && <Spinner className="h-3.5 w-3.5" />}
           Add
         </Button>
       </div>
