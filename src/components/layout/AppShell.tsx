@@ -26,6 +26,7 @@ interface AppShellProps {
 export function AppShell({ children, analysesToday }: AppShellProps) {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const pathname = usePathname()
+  const isMarketingRoute = pathname?.startsWith('/landing')
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -37,6 +38,10 @@ export function AppShell({ children, analysesToday }: AppShellProps) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
+
+  if (isMarketingRoute) {
+    return <>{children}</>
+  }
 
   return (
     <div className="flex h-screen w-full bg-canvas">
