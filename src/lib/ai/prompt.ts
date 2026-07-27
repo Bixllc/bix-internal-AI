@@ -28,6 +28,48 @@ Score the opportunity from 1-100 based on:
 
 Map every recommendation to one or more of these exact BIX service names: ${BIX_SERVICES.join(', ')}.
 
+Separately from opportunity, assess ABILITY TO PAY. A business with heavy manual
+work but no budget is not a lead. Score affordability 1-100 for a $3k-$16k project
+based only on what the website actually shows:
+- number of locations, size of the team or provider roster
+- breadth of the service menu and published price points
+- membership/package programs, financing offers, gift cards
+- paid advertising, professional photography, active blog or press coverage
+- hiring pages or open roles (a growth signal)
+- franchise or multi-brand ownership
+- signs of the opposite: single operator, no pricing, dated or template site,
+  free-tier tooling, no staff listed
+
+Rules for the affordability assessment:
+- Every entry in affordabilitySignals and growthSignals MUST cite concrete
+  evidence from the page content. Quote or closely paraphrase what you saw.
+- Never state a revenue or team size the site does not support. If the site
+  gives you little to work with, say so: set affordabilityTier to "Unknown",
+  affordabilityConfidence to "Low", and use "Not determinable from site" for
+  estimatedAnnualRevenue and estimatedTeamSize.
+- A confident guess is worse than an honest "Unknown" here. This number decides
+  whether a real person spends time on outreach.
+- Tiers: "Strong" (clearly affords it), "Likely", "Stretch" (would need a
+  smaller scope), "Unlikely" (cannot realistically afford $3k+), "Unknown".
+
+Calibrate the affordability score against this scale and USE THE FULL RANGE.
+Most businesses are not an 85. Be willing to score low.
+- 85-100: multi-location or franchise, large provider roster, clear enterprise
+  spend (paid ads, custom-built site, financing programs)
+- 65-84: single strong location, full staff page, published packages or
+  memberships, professional site build
+- 45-64: small independent operator, thin service menu, template site, few or
+  no staff listed — likely needs a reduced scope
+- 25-44: solo practitioner, booth renter, no pricing, free-tier tooling
+- 1-24: hobbyist or side business, or clearly dormant
+Do not cluster scores near the top. If two businesses differ in size, their
+scores must differ. A well-run single-location spa is a 70, not a 90.
+
+affordabilityConfidence must match the evidence you actually found:
+- "High" requires concrete size evidence (staff roster, location list, pricing).
+- If estimatedAnnualRevenue AND estimatedTeamSize are both "Not determinable
+  from site", confidence CANNOT be "High" — use "Low".
+
 Cold email and LinkedIn message rules:
 - short, specific to this business, natural tone
 - not spammy, no overpromising
@@ -76,6 +118,14 @@ Return a single JSON object with exactly these keys:
   "recommendedBixSolutions": [{ "service": string, "whyItFits": string, "expectedImpact": string, "implementation": string, "estimatedPriceRange": string }],
   "coldEmailDraft": string ("Subject: ...\\n\\n..." format),
   "linkedinMessage": string,
-  "salesTalkingPoints": string[]
+  "salesTalkingPoints": string[],
+  "affordabilityScore": number (1-100, ability to pay for a $3k-$16k project),
+  "affordabilityTier": "Strong" | "Likely" | "Stretch" | "Unlikely" | "Unknown",
+  "affordabilityConfidence": "High" | "Medium" | "Low",
+  "estimatedAnnualRevenue": string (e.g. "$1M - $3M", or "Not determinable from site"),
+  "estimatedTeamSize": string (e.g. "8-15 staff", or "Not determinable from site"),
+  "affordabilityRationale": string (2-3 sentences on why they can or cannot afford this),
+  "affordabilitySignals": [{ "signal": string, "evidence": string (what on the site shows this), "direction": "positive" | "negative" }],
+  "growthSignals": [{ "signal": string, "evidence": string }]
 }`
 }

@@ -1,6 +1,7 @@
 import { prisma } from './db'
 import type { Prospect, ProspectStatus } from '../types'
 import { timeAgo, daysSince } from './format'
+import { dealFit } from './fit'
 
 export interface QueueEntry {
   prospect: Prospect
@@ -74,12 +75,29 @@ export async function getTodaysQueue(limit = 6): Promise<QueueEntry[]> {
   }))
 }
 
+/**
+ * Ranks prospects BIX can actually win: a business that scores 95 on
+ * opportunity but cannot fund a $3k project should not outrank a solid 70 that
+ * can. Prospects clearing both floors surface first, then by combined score.
+ */
 export async function getHighOpportunity(limit = 4): Promise<Prospect[]> {
-  return prisma.prospect.findMany({
+  const scored = await prisma.prospect.findMany({
     where: { opportunityScore: { not: null } },
     orderBy: { opportunityScore: 'desc' },
-    take: limit,
+    take: 100,
   })
+
+  return scored
+    .sort((a, b) => {
+      const aTarget = dealFit(a).verdict === 'target' ? 1 : 0
+      const bTarget = dealFit(b).verdict === 'target' ? 1 : 0
+      if (aTarget !== bTarget) return bTarget - aTarget
+
+      const aCombined = (a.opportunityScore ?? 0) + (a.affordabilityScore ?? 0)
+      const bCombined = (b.opportunityScore ?? 0) + (b.affordabilityScore ?? 0)
+      return bCombined - aCombined
+    })
+    .slice(0, limit)
 }
 
 export async function getNeedsAttention(limit = 5): Promise<Prospect[]> {

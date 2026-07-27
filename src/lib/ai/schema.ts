@@ -27,6 +27,22 @@ export const recommendedSolutionSchema = z.object({
   estimatedPriceRange: z.string(),
 })
 
+/**
+ * Every affordability claim must name the thing on the site that supports it.
+ * Without this the model happily invents revenue figures, which is worse than
+ * saying nothing — it looks like research.
+ */
+export const affordabilitySignalSchema = z.object({
+  signal: z.string(),
+  evidence: z.string(),
+  direction: z.enum(['positive', 'negative']).default('positive'),
+})
+
+export const growthSignalSchema = z.object({
+  signal: z.string(),
+  evidence: z.string(),
+})
+
 export const aiAnalysisReportSchema = z.object({
   executiveSummary: z.string(),
   services: z.array(z.string()).default([]),
@@ -47,6 +63,15 @@ export const aiAnalysisReportSchema = z.object({
   coldEmailDraft: z.string(),
   linkedinMessage: z.string(),
   salesTalkingPoints: z.array(z.string()).default([]),
+
+  affordabilityScore: z.number().min(1).max(100),
+  affordabilityTier: z.enum(['Strong', 'Likely', 'Stretch', 'Unlikely', 'Unknown']),
+  affordabilityConfidence: z.enum(['High', 'Medium', 'Low']),
+  estimatedAnnualRevenue: z.string(),
+  estimatedTeamSize: z.string(),
+  affordabilityRationale: z.string(),
+  affordabilitySignals: z.array(affordabilitySignalSchema).default([]),
+  growthSignals: z.array(growthSignalSchema).default([]),
 })
 
 export type AIAnalysisReportParsed = z.infer<typeof aiAnalysisReportSchema>

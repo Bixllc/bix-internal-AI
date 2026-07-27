@@ -30,6 +30,17 @@ export interface RecommendedSolution {
   estimatedPriceRange: string
 }
 
+export interface AffordabilitySignal {
+  signal: string
+  evidence: string
+  direction: 'positive' | 'negative'
+}
+
+export interface GrowthSignal {
+  signal: string
+  evidence: string
+}
+
 export interface InternalNote {
   id: string
   author: string
@@ -63,4 +74,12 @@ export interface AIAnalysisReport {
   coldEmailDraft: string
   linkedinMessage: string
   salesTalkingPoints: string[]
+  affordabilityScore: number
+  affordabilityTier: 'Strong' | 'Likely' | 'Stretch' | 'Unlikely' | 'Unknown'
+  affordabilityConfidence: 'High' | 'Medium' | 'Low'
+  estimatedAnnualRevenue: string
+  estimatedTeamSize: string
+  affordabilityRationale: string
+  affordabilitySignals: AffordabilitySignal[]
+  growthSignals: GrowthSignal[]
 }

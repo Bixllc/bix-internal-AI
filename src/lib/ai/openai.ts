@@ -53,7 +53,24 @@ export async function generateAnalysis(params: {
     )
   }
 
-  return result.data
+  return normalizeAffordability(result.data)
+}
+
+const NOT_DETERMINABLE = /not determinable|unknown|n\/a|unclear/i
+
+/**
+ * The model will claim "High" confidence while admitting it could not determine
+ * either revenue or team size. Ability to pay drives whether Sheneska spends
+ * time on a lead, so an unsupported confidence rating gets corrected here
+ * rather than trusted.
+ */
+function normalizeAffordability(report: AIAnalysisReportParsed): AIAnalysisReportParsed {
+  const noRevenue = NOT_DETERMINABLE.test(report.estimatedAnnualRevenue)
+  const noTeamSize = NOT_DETERMINABLE.test(report.estimatedTeamSize)
+  if (noRevenue && noTeamSize && report.affordabilityConfidence === 'High') {
+    return { ...report, affordabilityConfidence: 'Low' }
+  }
+  return report
 }
 
 export async function regenerateOutreach(params: {

@@ -15,6 +15,7 @@ import { AnalyzeWebsiteButton } from '@/components/prospect/AnalyzeWebsiteButton
 import { StatusSelect } from '@/components/prospect/StatusSelect'
 import { ExecutiveSummary } from '@/components/prospect/ExecutiveSummary'
 import { OpportunityCard } from '@/components/prospect/OpportunityCard'
+import { AffordabilityCard } from '@/components/prospect/AffordabilityCard'
 import { CustomerJourney } from '@/components/prospect/CustomerJourney'
 import { DetectedSoftware } from '@/components/prospect/DetectedSoftware'
 import { BulletCard } from '@/components/prospect/BulletCard'
@@ -79,6 +80,7 @@ export default async function ProspectDetailPage({ params }: { params: { id: str
         <>
           <ExecutiveSummary prospect={prospect} />
           <OpportunityCard prospect={prospect} />
+          <AffordabilityCard prospect={prospect} />
 
           <Card className="p-6">
             <SectionHeading title="Business Overview" />

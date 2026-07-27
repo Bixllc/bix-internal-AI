@@ -56,6 +56,14 @@ export async function analyzeWebsiteAction(prospectId: string): Promise<ActionRe
         coldEmailDraft: report.coldEmailDraft,
         linkedinMessage: report.linkedinMessage,
         salesTalkingPoints: report.salesTalkingPoints,
+        affordabilityScore: report.affordabilityScore,
+        affordabilityTier: report.affordabilityTier,
+        affordabilityConfidence: report.affordabilityConfidence,
+        estimatedAnnualRevenue: report.estimatedAnnualRevenue,
+        estimatedTeamSize: report.estimatedTeamSize,
+        affordabilityRationale: report.affordabilityRationale,
+        affordabilitySignals: report.affordabilitySignals,
+        growthSignals: report.growthSignals,
       },
     })
 
@@ -68,7 +76,7 @@ export async function analyzeWebsiteAction(prospectId: string): Promise<ActionRe
       data: {
         prospectId,
         type: 'ai',
-        message: `AI report generated — score ${report.opportunityScore} (${report.leadQuality})`,
+        message: `AI report generated — opportunity ${report.opportunityScore} (${report.leadQuality}), affordability ${report.affordabilityScore} (${report.affordabilityTier})`,
       },
     })
 

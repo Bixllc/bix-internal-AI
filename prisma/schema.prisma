@@ -56,6 +56,17 @@ model Prospect {
   linkedinMessage           String? @db.Text
   salesTalkingPoints        Json?
 
+  // Ability to pay. Kept separate from opportunityScore so a business with
+  // heavy manual work but no budget can be told apart from a real target.
+  affordabilityScore        Int?
+  affordabilityTier         String?
+  affordabilityConfidence   String?
+  estimatedAnnualRevenue    String?
+  estimatedTeamSize         String?
+  affordabilityRationale    String? @db.Text
+  affordabilitySignals      Json?
+  growthSignals             Json?
+
   notes Json?
 
   createdAt DateTime @default(now())
@@ -66,6 +77,7 @@ model Prospect {
 
   @@index([status])
   @@index([opportunityScore])
+  @@index([affordabilityScore])
   @@index([website])
 }
 
