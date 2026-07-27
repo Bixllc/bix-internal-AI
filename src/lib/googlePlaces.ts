@@ -9,70 +9,51 @@ export interface GooglePlaceLead {
   googleMapsUrl: string | null
 }
 
-interface TextSearchResult {
-  place_id: string
-  name: string
-  formatted_address?: string
+interface NewPlace {
+  id: string
+  displayName?: { text?: string }
+  formattedAddress?: string
+  websiteUri?: string
+  nationalPhoneNumber?: string
+  googleMapsUri?: string
 }
 
-interface TextSearchResponse {
-  status: string
-  error_message?: string
-  results: TextSearchResult[]
-  next_page_token?: string
+interface SearchTextResponse {
+  places?: NewPlace[]
+  nextPageToken?: string
+  error?: { code: number; status: string; message: string }
 }
 
-interface PlaceDetailsResponse {
-  status: string
-  error_message?: string
-  result?: {
-    formatted_phone_number?: string
-    website?: string
-    url?: string
-  }
-}
+const SEARCH_TEXT_URL = 'https://places.googleapis.com/v1/places:searchText'
 
-const TEXT_SEARCH_URL = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
-const DETAILS_URL = 'https://maps.googleapis.com/maps/api/place/details/json'
+// The New API returns contact details inline via the field mask, so one request
+// per page covers everything — no per-place Details lookup needed.
+const FIELD_MASK = [
+  'places.id',
+  'places.displayName',
+  'places.formattedAddress',
+  'places.websiteUri',
+  'places.nationalPhoneNumber',
+  'places.googleMapsUri',
+  'nextPageToken',
+].join(',')
 
-function friendlyStatusError(status: string, errorMessage?: string): string {
+// searchText caps a single page at 20 results.
+const MAX_PAGE_SIZE = 20
+
+function friendlyError(status: string, message: string): string {
   switch (status) {
-    case 'ZERO_RESULTS':
-      return 'ZERO_RESULTS'
-    case 'REQUEST_DENIED':
-      return `Google Places request was denied — check that GOOGLE_PLACES_API_KEY is valid and the Places API is enabled. ${errorMessage ?? ''}`.trim()
-    case 'OVER_QUERY_LIMIT':
-      return 'Google Places API quota exceeded for today. Try again later.'
-    case 'INVALID_REQUEST':
+    case 'PERMISSION_DENIED':
+      return `Google Places request was denied — check that GOOGLE_PLACES_API_KEY is valid and that "Places API (New)" is enabled for the project. ${message}`.trim()
+    case 'RESOURCE_EXHAUSTED':
+      return 'Google Places API quota exceeded. Try again later.'
+    case 'INVALID_ARGUMENT':
       return 'Google Places request was invalid — check the industry/location input.'
+    case 'UNAUTHENTICATED':
+      return 'Google Places rejected the API key. Verify GOOGLE_PLACES_API_KEY in your environment.'
     default:
-      return `Google Places API error (${status}). ${errorMessage ?? ''}`.trim()
+      return `Google Places API error (${status}). ${message}`.trim()
   }
-}
-
-async function fetchDetails(placeId: string, apiKey: string) {
-  const url = new URL(DETAILS_URL)
-  url.searchParams.set('place_id', placeId)
-  url.searchParams.set('fields', 'formatted_phone_number,website,url')
-  url.searchParams.set('key', apiKey)
-
-  const res = await fetch(url.toString())
-  const json = (await res.json()) as PlaceDetailsResponse
-  if (json.status !== 'OK') return null
-  return json.result ?? null
-}
-
-async function mapWithConcurrency<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length)
-  let index = 0
-  async function worker() {
-    while (index < items.length) {
-      const current = index++
-      results[current] = await fn(items[current])
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker))
-  return results
 }
 
 export async function searchGooglePlaces(params: {
@@ -85,55 +66,52 @@ export async function searchGooglePlaces(params: {
     throw new Error('GOOGLE_PLACES_API_KEY is not configured. Add it to your .env file to search for leads.')
   }
 
-  const query = `${params.industry} in ${params.location}`
+  const textQuery = `${params.industry} in ${params.location}`
   const maxResults = Math.min(Math.max(params.maxResults, 1), 60)
 
-  const allResults: TextSearchResult[] = []
+  const collected: NewPlace[] = []
   let pageToken: string | undefined
-  let firstStatus: string | undefined
 
   do {
-    const url = new URL(TEXT_SEARCH_URL)
-    url.searchParams.set('query', query)
-    url.searchParams.set('key', apiKey)
-    if (pageToken) {
-      url.searchParams.set('pagetoken', pageToken)
-      // Google requires a short delay before a page token becomes valid.
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+    const body: Record<string, unknown> = {
+      textQuery,
+      pageSize: Math.min(maxResults - collected.length, MAX_PAGE_SIZE),
     }
+    if (pageToken) body.pageToken = pageToken
 
-    const res = await fetch(url.toString())
+    const res = await fetch(SEARCH_TEXT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': FIELD_MASK,
+      },
+      body: JSON.stringify(body),
+    })
+
+    const json = (await res.json().catch(() => null)) as SearchTextResponse | null
+
     if (!res.ok) {
+      if (json?.error) throw new Error(friendlyError(json.error.status, json.error.message))
       throw new Error(`Google Places request failed with HTTP ${res.status}.`)
     }
-    const json = (await res.json()) as TextSearchResponse
-    firstStatus = firstStatus ?? json.status
-
-    if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') {
-      throw new Error(friendlyStatusError(json.status, json.error_message))
+    if (json?.error) {
+      throw new Error(friendlyError(json.error.status, json.error.message))
     }
 
-    allResults.push(...json.results)
-    pageToken = allResults.length < maxResults ? json.next_page_token : undefined
+    const places = json?.places ?? []
+    collected.push(...places)
+
+    // An empty page means the result set is exhausted, even if a token came back.
+    pageToken = places.length > 0 && collected.length < maxResults ? json?.nextPageToken : undefined
   } while (pageToken)
 
-  if (firstStatus === 'ZERO_RESULTS' || allResults.length === 0) {
-    return []
-  }
-
-  const limited = allResults.slice(0, maxResults)
-
-  const details = await mapWithConcurrency(limited, 8, (place) => fetchDetails(place.place_id, apiKey))
-
-  return limited.map((place, i) => {
-    const detail = details[i]
-    return {
-      businessName: place.name,
-      website: detail?.website ?? null,
-      phone: detail?.formatted_phone_number ?? null,
-      address: place.formatted_address ?? null,
-      googlePlaceId: place.place_id,
-      googleMapsUrl: detail?.url ?? null,
-    }
-  })
+  return collected.slice(0, maxResults).map((place) => ({
+    businessName: place.displayName?.text ?? 'Unknown business',
+    website: place.websiteUri ?? null,
+    phone: place.nationalPhoneNumber ?? null,
+    address: place.formattedAddress ?? null,
+    googlePlaceId: place.id,
+    googleMapsUrl: place.googleMapsUri ?? null,
+  }))
 }

@@ -9,6 +9,14 @@ const CANDIDATE_PATHS = ['', '/services', '/booking', '/contact', '/about', '/fa
 const MAX_CHARS_PER_PAGE = 6000
 const FETCH_TIMEOUT_MS = 12000
 
+/**
+ * Minimum unique text across all fetched pages before analysis is allowed.
+ * JS-rendered sites return only a shell (title + nav) to a plain HTTP fetch,
+ * which is enough for the model to invent a confident, wholly ungrounded
+ * report. Failing loudly here is far better than a fabricated cold email.
+ */
+const MIN_TOTAL_CONTENT_CHARS = 1200
+
 function normalizeBaseUrl(website: string): string {
   const trimmed = website.trim()
   if (/^https?:\/\//i.test(trimmed)) return trimmed
@@ -101,5 +109,27 @@ export async function fetchWebsiteContent(website: string): Promise<FetchedPage[
     )
   }
 
-  return [homepage, ...rest.filter((page): page is FetchedPage => page !== null)]
+  const pages = [homepage, ...rest.filter((page): page is FetchedPage => page !== null)]
+
+  // Sites that soft-404 (or render client-side) serve a byte-identical shell for
+  // every path. Counting that shell once per page would inflate the content
+  // total sixfold and sail past the threshold below.
+  const seen = new Set<string>()
+  const unique = pages.filter((page) => {
+    const fingerprint = page.text.replace(/\s+/g, ' ').trim()
+    if (seen.has(fingerprint)) return false
+    seen.add(fingerprint)
+    return true
+  })
+
+  const totalChars = unique.reduce((sum, page) => sum + page.text.length, 0)
+  if (totalChars < MIN_TOTAL_CONTENT_CHARS) {
+    throw new Error(
+      `Only ${totalChars} characters of readable content were extracted from ${baseUrl} — not enough to analyze. ` +
+        `This usually means the site renders its content with JavaScript. ` +
+        `Set FIRECRAWL_API_KEY in your environment to scrape these sites properly.`,
+    )
+  }
+
+  return unique
 }
