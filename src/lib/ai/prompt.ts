@@ -34,6 +34,7 @@ Cold email and LinkedIn message rules:
 - focus on manual work / time saved, not "AI" as a buzzword (mention it at most once)
 - end with a free automation audit call-to-action
 - format coldEmailDraft as "Subject: <subject line>\\n\\n<email body>"
+- sign off as "Sheneska" — never use a placeholder like "[Your Name]"
 
 Respond with ONLY a single JSON object matching the exact schema you are given. No markdown, no commentary, no code fences.`
 
